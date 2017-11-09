@@ -32,7 +32,7 @@ Lo scopo di questo tool è valutare le performances del classificatore Bayesiano
 ## Avvio:
 Eseguire lo script run.sh che:
 * carica agile
-* copia le dipendeze da AG_extspot-v2 (GammaRayDetector, Blob e BlobsFinder ) e da AG_utils (FolderManager, MapConverter)
+* copia le dipendeze da AG_extspot-v2 (BayesianClassifierForBlobs, Blob e BlobsFinder ) e da AG_utils (FolderManager, MapConverter,FileWriter)
 * compila
 * chiama l’eseguibile passandogli parametri di default (100,100,4)
 
@@ -99,11 +99,12 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
             * Il `CustomPoint` si prende da `blob->getGalacticCentroid()` /*TODO->change the reference system, convert to galactic*/
             * Esempio: `MAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]`
  
-* Per ogni soglia di classificazione:
+* Per ogni soglia di classificazione (ovvero per ogni chiave in `classificationSetByThresholds`):
+    * Prendiamo il valore: `map<string,pair<CustomPoint,char*>> classificationSet`
     * Creiamo le variabili per il calcolo della performance:
         * `TP,TN,FP,FN`
         * `vector<double> errorDistances`
-    * Confrontiamo le due liste, iterandole:
+    * Confrontiamo la lista `testSet` con la lista `classificationSet`, iterandole:
         * Confrontiamo l'etichetta vera con l'etichetta predetta -> aggiorniamo `TP,TN,FP,FN`
         * Calcoliamo la distanza sferica tra CustomPoint vero e CustomPoint predetto -> aggiorniamo `errorDistances`
     * Scrive su file:
