@@ -92,6 +92,7 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 
 * Per ogni blob in allBlobs:
     * aggiungiamo una entry alla lista testSet. Ad esempio `MAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
+        * un blob è etichettato come flusso (F) se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()`
     * Per ogni classificationThreshold in `classificationSetByThresholds`:
         * Prendiamo la chiave: `double classificationThreshold`
         * Prendiamo il valore: `map<string,pair<CustomPoint,char*> classificationSet` e popoliamolo con:
