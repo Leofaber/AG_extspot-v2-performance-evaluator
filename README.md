@@ -35,7 +35,7 @@ Eseguire lo script run.sh che:
 * carica agile
 * copia le dipendeze da AG_extspot-v2 (BayesianClassifierForBlobs, Blob e BlobsFinder ) e da AG_utils (FolderManager, MapConverter,FileWriter)
 * compila
-* chiama l’eseguibile passandogli parametri di default (100,100,4)
+* chiama l’eseguibile passandogli parametri di default (testset, 95, 0.1, 100, 100, 4)
 
 ## Workflow del tool
 * Creare la lista del test set 
