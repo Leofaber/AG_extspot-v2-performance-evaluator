@@ -13,9 +13,9 @@ cp ../AG_extspot-v2/src/Blob.cpp src/Blob.cpp
 cp ../AG_extspot-v2/include/BlobsFinder.h include/BlobsFinder.h
 cp ../AG_extspot-v2/src/BlobsFinder.cpp src/BlobsFinder.cpp
 
-# Gamma Ray Detector
-cp ../AG_extspot-v2/include/GammaRayDetector.h include/GammaRayDetector.h
-cp ../AG_extspot-v2/src/GammaRayDetector.cpp src/GammaRayDetector.cpp
+# BayesianClassifierForBlobs
+cp ../AG_extspot-v2/include/BayesianClassifierForBlobs.h include/BayesianClassifierForBlobs.h
+cp ../AG_extspot-v2/src/BayesianClassifierForBlobs.cpp src/BayesianClassifierForBlobs.cpp
 
 
 # Map Converter
@@ -26,8 +26,12 @@ cp ../AG_utils/src/FolderManager.cpp src/FolderManager.cpp
 cp ../AG_utils/include/MapConverter.h include/MapConverter.h
 cp ../AG_utils/src/MapConverter.cpp src/MapConverter.cpp
 
+# File Writer
+cp ../AG_utils/include/FileWriter.h include/FileWriter.h
+cp ../AG_utils/src/FileWriter.cpp src/FileWriter.cpp
+
 
 make
 
-./bin/AG_extspot-v2-bayesian-model-evaluator trainingset 100 100 4
+./bin/AG_extspot-v2-performance-evaluator testset 95 0.1 100 100 4
 

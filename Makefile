@@ -15,7 +15,7 @@
 #	* uninstall: add or remove the files and directories that should be uninstalled
 #############################################################################
 
-PROJECT= AG_extspot-v2-bayesian-model-evaluator
+PROJECT= AG_extspot-v2-performance-evaluator
 SHELL = /bin/sh
 
 ####### 1) Project names and system
@@ -25,7 +25,7 @@ SYSTEM= $(shell gcc -dumpmachine)
 LINKERENV= cfitsio, pil, wcs, agile, opencv
 
 # Applications
-AG_EXTSPOT = AG_extspot-v2-bayesian-model-evaluator
+AG_EXTSPOT = AG_extspot-v2-performance-evaluator
 
 # Libraries
 AGILE_MAP = AgileMap
