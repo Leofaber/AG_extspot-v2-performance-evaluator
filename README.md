@@ -5,7 +5,7 @@ Lo scopo di questo tool è valutare le performances del classificatore Bayesiano
 ## Input:
 * const char * path al test set
 * double classificationThreshold
-* double step
+* double thresholdStep
 * double CDELT1
 * double CDELT2
 * double PSF
@@ -83,8 +83,12 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 
 * Si definisce `map< string , pair < CustomPoint , char * > > testSet`
 * Si definisce `map<    double, map<string,pair<CustomPoint,char*>>      > classificationSetByThresholds`
-* Calcolo valori di soglia
-    * per ogni valore trovato si aggiunge una entry a `classificationSetByThresholds`.
+* Si definisce un `vector<double> thresholds` che conterrà tutte le soglie di classificazione.
+* Calcolo valori di soglia:
+    * fino a che non arrivo a 100
+        * aggiungo a `thresholds` la classificationThreshold
+        * classificationThreshold += thresholdStep
+* Per ogni valore in `thresholds` si aggiunge una entry a `classificationSetByThresholds`.
 * `FolderManager` -> popola una lista `vector<string> filenames`
 * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `MAP1000_313.123_65.223_BLOB1 : b`
 * Per ogni filename in filenames
