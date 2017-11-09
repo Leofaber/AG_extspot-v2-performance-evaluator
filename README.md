@@ -5,6 +5,7 @@ Lo scopo di questo tool è valutare le performances del classificatore Bayesiano
 ## Input:
 * const char * path al test set
 * double classificationThreshold
+* double step
 * double CDELT1
 * double CDELT2
 * double PSF
