@@ -87,7 +87,7 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 * `FolderManager` -> popola una lista `vector<string> filenames`
 * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `MAP1000_313.123_65.223_BLOB1 : b`
 * Per ogni filename in filenames
-    * `MapConverter` -> converte il fits in Map
+    * `MapConverter` -> converte il fits in CustomMap
     * `BlobsFinder` -> aggiunge tutti i blobs in `allBlobs`
 * Per ogni blob in `allBlobs`:
     * aggiungiamo una entry alla lista testSet. Ad esempio `MAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
