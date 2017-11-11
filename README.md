@@ -83,7 +83,7 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 * class PerformanceEvaluator
     * il costruttore accetta: string testSetPath, double threshold, double CDELT1, double CDELT2, double PSF
     
-*metodo evaluate()
+* metodo evaluate()
     * Si definisce `map< string , pair < CustomPoint , char > > testSet`
     * Si definisce `map< string , pair < CustomPoint , char > > classificationSet`
     * `FolderManager` -> popola una lista `vector<string> filenames`
