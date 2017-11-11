@@ -82,13 +82,8 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 ## Implementazione: class PerformanceEvaluator -> metodo evaluate()
 
 * Si definisce `map< string , pair < CustomPoint , char * > > testSet`
-* Si definisce `map<    double, map<string,pair<CustomPoint,char*>>      > classificationSetByThresholds`
-* Si definisce un `vector<double> thresholds` che conterrà tutte le soglie di classificazione.
-* Calcolo valori di soglia:
-    * fino a che non arrivo a 100
-        * aggiungo a `thresholds` la classificationThreshold
-        * classificationThreshold += thresholdStep
-* Per ogni valore in `thresholds` si aggiunge una entry a `classificationSetByThresholds`.
+* Si definisce `map<string,pair<CustomPoint,char*>> classificationSet`
+* Si definisce un `double threshold` che conterrà tutte le soglie di classificazione.
 * `FolderManager` -> popola una lista `vector<string> filenames`
 * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `MAP1000_313.123_65.223_BLOB1 : b`
 * Per ogni filename in filenames
@@ -97,7 +92,6 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 * Per ogni blob in `allBlobs`:
     * aggiungiamo una entry alla lista testSet. Ad esempio `MAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
         * un blob è etichettato come flusso (F) se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()`
-    * Per ogni classificationThreshold in `classificationSetByThresholds`:
         * Prendiamo la chiave: `double classificationThreshold`
         * Prendiamo il valore: `map<string,pair<CustomPoint,char*> classificationSet` e popoliamolo con:
             * Il nome (string) lo prendiamo dalla chiave di `testSet`
@@ -105,16 +99,15 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
             * Il `CustomPoint` si prende da `blob->getGalacticCentroid()` /*TODO->change the reference system, convert to galactic*/
             * Esempio: `MAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]`
  
-* Per ogni soglia di classificazione (ovvero per ogni chiave in `classificationSetByThresholds`):
-    * Prendiamo il valore: `map<string,pair<CustomPoint,char*>> classificationSet`
-    * Creiamo le variabili per il calcolo della performance:
-        * `TP,TN,FP,FN`
-        * `vector<double> errorDistances`
-    * Confrontiamo la lista `testSet` con la lista `classificationSet`, iterandole:
-        * Confrontiamo l'etichetta vera con l'etichetta predetta -> aggiorniamo `TP,TN,FP,FN`
-        * Calcoliamo la distanza sferica tra CustomPoint vero e CustomPoint predetto -> aggiorniamo `errorDistances`
-    * Scrive su file:
-        * `Total Number of Instances, Correctly Classified Instances, Incorrectly Classified Instances, Kappa statistic, False Negatives Rate, False Positives Rate, Accuracy, FMeasure, Error Distances Mean, Error Distances Deviation`
+ * Prendiamo il valore: `map<string,pair<CustomPoint,char*>> classificationSet`
+ * Creiamo le variabili per il calcolo della performance:
+    * `TP,TN,FP,FN`
+    * `vector<double> errorDistances`
+ * Confrontiamo la lista `testSet` con la lista `classificationSet`, iterandole:
+    * Confrontiamo l'etichetta vera con l'etichetta predetta -> aggiorniamo `TP,TN,FP,FN`
+    * Calcoliamo la distanza sferica tra CustomPoint vero e CustomPoint predetto -> aggiorniamo `errorDistances`
+ * Scrive su file:
+    * `Total Number of Instances, Correctly Classified Instances, Incorrectly Classified Instances, Kappa statistic, False Negatives Rate, False Positives Rate, Accuracy, FMeasure, Error Distances Mean, Error Distances Deviation`
 
 ## Appunti 
 * Inserimento di una entry in una mappa `map.insert(std::pair<key_type, value_type>(key, value));`
