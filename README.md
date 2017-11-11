@@ -87,19 +87,20 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
     * Si definisce `map< string , pair < CustomPoint , char > > testSet`
     * Si definisce `map< string , pair < CustomPoint , char > > classificationSet`
     * `FolderManager` -> popola una lista `vector<string> filenames`
-    * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `MAP1000_313.123_65.223_BLOB1 : b`
+    * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `FMAP1000_313.123_65.223_BLOB1 : b`
     * Per ogni filename in filenames    (si popola la lista `allBlobs`)
         * `MapConverter` -> converte il fits in CustomMap
         * `BlobsFinder`::findBlobs(int ** image, int rows, int cols, double CDELT1, double CDELT2) -> ritorna un `vector<Blob* >`. Per ogni blob trovato, si aggiunge in `allBlobs` la coppia make_pair(`filename`+countBlob , puntatore al blob) 
     * Per ogni blob in `allBlobs`:      (si popolano le liste `testSet` e `classificationSet`)
-        * aggiungiamo una entry alla lista `testSet`. Ad esempio `MAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
-            * un blob è etichettato come flusso (F) se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()`   
+        * aggiungiamo una entry alla lista `testSet`. Ad esempio `FMAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
+            * se il primo carattere dell'identificatore univoco del blob è 'B' allora l'etichetta è 'B'.
+            * se il primo carattere dell'identificatore univoco del blob è 'F' allora l'etichetta è 'F' se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()` altrimenti l'etichetta è 'B'.   
         * aggiungiamo una entry alla lista `classificationSet`:
             * Il nome (string) lo prendiamo dall'elemento corrente di `allBlobs`
             * Il `CustomPoint` si prende da `blob->getGalacticCentroid()` /*TODO->change the reference system, convert to galactic*/
             * Per calcolare l'etichetta si chiama il `BayesianClassifierForBlobs` -> calcola la percentuale:
                 * Se è >= classificationThreshold si etichetta come 'F'.
-            * Esempio: `MAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]``
+            * Esempio: `FMAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]``
      * Creiamo le variabili per il calcolo della performance:
         * `TP,TN,FP,FN`
         * `vector<double> errorDistances`
