@@ -79,41 +79,35 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
 *Soluzione2:*
 * Creare una funzione che che inserisce l'elemento `string,pair<CustomPoint,char*>` dato in input `string,CustomPoint,char*`
 
-## Implementazione: class PerformanceEvaluator -> metodo evaluate()
-
-* Si definisce `map< string , pair < CustomPoint , char * > > testSet`
-* Si definisce `map<    double, map<string,pair<CustomPoint,char*>>      > classificationSetByThresholds`
-* Si definisce un `vector<double> thresholds` che conterrà tutte le soglie di classificazione.
-* Calcolo valori di soglia:
-    * fino a che non arrivo a 100
-        * aggiungo a `thresholds` la classificationThreshold
-        * classificationThreshold += thresholdStep
-* Per ogni valore in `thresholds` si aggiunge una entry a `classificationSetByThresholds`.
-* `FolderManager` -> popola una lista `vector<string> filenames`
-* Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `MAP1000_313.123_65.223_BLOB1 : b`
-* Per ogni filename in filenames
-    * `MapConverter` -> converte il fits in Map
-    * `BlobsFinder` -> aggiunge tutti i blobs in `allBlobs`
-* Per ogni blob in `allBlobs`:
-    * aggiungiamo una entry alla lista testSet. Ad esempio `MAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
-        * un blob è etichettato come flusso (F) se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()`
-    * Per ogni classificationThreshold in `classificationSetByThresholds`:
-        * Prendiamo la chiave: `double classificationThreshold`
-        * Prendiamo il valore: `map<string,pair<CustomPoint,char*> classificationSet` e popoliamolo con:
-            * Il nome (string) lo prendiamo dalla chiave di `testSet`
-            * `BayesianClassifierForBlobs` -> calcola la percentuale. Se è >= classificationThreshold si etichetta come F (char *).
+## Implementazione: 
+* class PerformanceEvaluator
+    * il costruttore accetta: string testSetPath, double threshold, double CDELT1, double CDELT2, double PSF
+    
+* metodo evaluate()
+    * Si definisce `map< string , pair < CustomPoint , char > > testSet`
+    * Si definisce `map< string , pair < CustomPoint , char > > classificationSet`
+    * `FolderManager` -> popola una lista `vector<string> filenames`
+    * Si definisce una lista `vector< pair<string, Blob *> > allBlobs`  dove `string` è l'identificatore univo del blob. Esempio `FMAP1000_313.123_65.223_BLOB1 : b`
+    * Per ogni filename in filenames    (si popola la lista `allBlobs`)
+        * `MapConverter` -> converte il fits in CustomMap
+        * `BlobsFinder`::findBlobs(int ** image, int rows, int cols, double CDELT1, double CDELT2) -> ritorna un `vector<Blob* >`. Per ogni blob trovato, si aggiunge in `allBlobs` la coppia make_pair(`filename`+countBlob , puntatore al blob) 
+    * Per ogni blob in `allBlobs`:      (si popolano le liste `testSet` e `classificationSet`)
+        * aggiungiamo una entry alla lista `testSet`. Ad esempio `FMAP1000_313.123_65.223_BLOB1 : [  (45 , 30) , F ]`
+            * se il primo carattere dell'identificatore univoco del blob è 'B' allora l'etichetta è 'B'.
+            * se il primo carattere dell'identificatore univoco del blob è 'F' allora l'etichetta è 'F' se e solo se `b->getNumberOfPhotonsInBlob() > 1` && `b->isCentered()` altrimenti l'etichetta è 'B'.   
+        * aggiungiamo una entry alla lista `classificationSet`:
+            * Il nome (string) lo prendiamo dall'elemento corrente di `allBlobs`
             * Il `CustomPoint` si prende da `blob->getGalacticCentroid()` /*TODO->change the reference system, convert to galactic*/
-            * Esempio: `MAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]`
- 
-* Per ogni soglia di classificazione (ovvero per ogni chiave in `classificationSetByThresholds`):
-    * Prendiamo il valore: `map<string,pair<CustomPoint,char*>> classificationSet`
-    * Creiamo le variabili per il calcolo della performance:
+            * Per calcolare l'etichetta si chiama il `BayesianClassifierForBlobs` -> calcola la percentuale:
+                * Se è >= classificationThreshold si etichetta come 'F'.
+            * Esempio: `FMAP1000_313.123_65.223_BLOB1 : [  (48.3030 , 51.3011) , F ]``
+     * Creiamo le variabili per il calcolo della performance:
         * `TP,TN,FP,FN`
         * `vector<double> errorDistances`
-    * Confrontiamo la lista `testSet` con la lista `classificationSet`, iterandole:
+     * Confrontiamo la lista `testSet` con la lista `classificationSet`, iterandole:
         * Confrontiamo l'etichetta vera con l'etichetta predetta -> aggiorniamo `TP,TN,FP,FN`
         * Calcoliamo la distanza sferica tra CustomPoint vero e CustomPoint predetto -> aggiorniamo `errorDistances`
-    * Scrive su file:
+     * Scrive su file:
         * `Total Number of Instances, Correctly Classified Instances, Incorrectly Classified Instances, Kappa statistic, False Negatives Rate, False Positives Rate, Accuracy, FMeasure, Error Distances Mean, Error Distances Deviation`
 
 ## Appunti 
