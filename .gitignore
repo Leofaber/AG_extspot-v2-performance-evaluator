@@ -53,3 +53,14 @@ test/*
 *.gz
 *.fits
 version
+include/Blob.h
+include/BlobsFinder.h
+include/FolderManager.h
+include/MapConverter.h
+include/FileWriter.h
+src/Blob.cpp
+src/BlobsFinder.cpp
+src/FolderManager.cpp
+src/MapConverter.cpp
+src/FileWriter.cpp
+

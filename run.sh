@@ -6,16 +6,16 @@ module load agile-B24-r5
 #export PFILES=/home/student/PARFILES
 
 #Blob
-cp ../AG_extspot-v2/include/Blob.h include/Blob.h
-cp ../AG_extspot-v2/src/Blob.cpp src/Blob.cpp
+cp ../AG_utils/include/Blob.h include/Blob.h
+cp ../AG_utils/src/Blob.cpp src/Blob.cpp
 
 # Blobs Finder
-cp ../AG_extspot-v2/include/BlobsFinder.h include/BlobsFinder.h
-cp ../AG_extspot-v2/src/BlobsFinder.cpp src/BlobsFinder.cpp
+cp ../AG_utils/include/BlobsFinder.h include/BlobsFinder.h
+cp ../AG_utils/src/BlobsFinder.cpp src/BlobsFinder.cpp
 
 # BayesianClassifierForBlobs
-cp ../AG_extspot-v2/include/BayesianClassifierForBlobs.h include/BayesianClassifierForBlobs.h
-cp ../AG_extspot-v2/src/BayesianClassifierForBlobs.cpp src/BayesianClassifierForBlobs.cpp
+cp ../AG_utils/include/BayesianClassifierForBlobs.h include/BayesianClassifierForBlobs.h
+cp ../AG_utils/src/BayesianClassifierForBlobs.cpp src/BayesianClassifierForBlobs.cpp
 
 
 # Map Converter
@@ -33,5 +33,5 @@ cp ../AG_utils/src/FileWriter.cpp src/FileWriter.cpp
 
 make
 
-./bin/AG_extspot-v2-performance-evaluator testset 95 0.1 100 100 4
+./bin/AG_extspot-v2-performance-evaluator ./testSet 95 0.1 100 100 4
 

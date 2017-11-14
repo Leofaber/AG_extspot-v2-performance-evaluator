@@ -47,7 +47,7 @@ int main(int argc, char*argv[]){
 	/*
 		It will write the performances on a txt file
 	*/
-	PerformanceEvaluator pe;
+	PerformanceEvaluator pe(trainingSetPath, classificationThreshold, CDELT1, CDELT2, PSF);
 	pe.evaluate();
 	
 
