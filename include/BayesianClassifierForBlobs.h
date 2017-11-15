@@ -54,10 +54,12 @@ class BayesianClassifierForBlobs
         normal_distribution<double> bgPhotonsInBlobDistribution = normal_distribution<double>( 1.13719, 0.594528 );
         normal_distribution<double> fluxPhotonsInBlobDistribution = normal_distribution<double>( 4.15919, 1.96208 );
 
-        //normal_distribution<double> bgPhotonsClosenessDistribution = normal_distribution<double>( 1.3744, 2.30439 );
-        //normal_distribution<double> fluxPhotonsClosenessDistribution = normal_distribution<double>( 5.51344, 2.43346 );
-	  normal_distribution<double> bgPhotonsClosenessDistribution = normal_distribution<double>( 15.1198, 7.05518 ); //degrees
-	  normal_distribution<double> fluxPhotonsClosenessDistribution = normal_distribution<double>( 1.92534, 1.00237 ); // degrees
+        normal_distribution<double> bgPhotonsClosenessDistribution = normal_distribution<double>( 1.3744, 2.30439 );
+        normal_distribution<double> fluxPhotonsClosenessDistribution = normal_distribution<double>( 5.51344, 2.43346 );
+	
+
+	//normal_distribution<double> bgPhotonsClosenessDistribution = normal_distribution<double>( 15.1198, 7.05518 ); //degrees
+	//normal_distribution<double> fluxPhotonsClosenessDistribution = normal_distribution<double>( 1.92534, 1.00237 ); // degrees
 
 
         /// ADD DISTRIBUTION IF NEEDED

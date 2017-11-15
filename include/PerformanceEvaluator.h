@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 #include"Blob.h"
 #include"FolderManager.h"
@@ -18,18 +19,16 @@
 #include"BlobsFinder.h"
 #include"AgileMap.h"
 #include"BayesianClassifierForBlobs.h"
+#include"FileWriter.h"
 
 using namespace std;
 
 class PerformanceEvaluator{
 
 	public:
-		PerformanceEvaluator(string testSetPath, double threshold, double CDELT1, double CDELT2, double PSF );
+		PerformanceEvaluator(string testSetPath, double threshold, double CDELT1, double CDELT2, double PSF);
 		void evaluate();
-		void insertTestSet();	//string id, pair < CustomPoint, char > cntr_lb
-		void insertClassificationSet(); 
-		void insertAllBlobs();
-		void computePerformance();
+		
 
 	private:
 
@@ -38,23 +37,44 @@ class PerformanceEvaluator{
 		double CDELT1;
 		double CDELT2;
 		double PSF;
-		int TP;
-		int FP;
-		int TN;
-		int FN;
-		vector<double> errorDistances;
+		BayesianClassifierForBlobs reverendBayes;
 
-		map< string, pair < CustomPoint , char > > testSet;
-
-		map< string, pair < CustomPoint , char > > classificationSet;
-
+		// Le immagini
 		vector<string> filenames;
 
 		vector< pair < string , Blob * > > allBlobs;
 
-		AgileMap agileMapTool;
+		// Il test set ->  <identificativo dell'istanza, pair<Centroide,Etichetta di classificazione> >
+		map< string, pair < CustomPoint , char > > testSet;
 
-		BayesianClassifierForBlobs reverendBayes;
+
+
+
+
+		/*
+			Estrae tutti i blobs dalle immagini del test set e li mette in un vettore di coppie (identificativo, puntatore al Blob)
+		*/
+		/*vector< pair < string , Blob * > >*/void extractBlobsFromImages();
+
+		/*
+			Prende la lista dei blobs e gli filtra scegliendo gli elementi che andranno a formare il test set			
+		*/
+		void createTestSetMap(/*vector< pair < string , Blob * > >& allBlobs*/);
+
+		/*
+			Effettua la classificazione sul Blob * di ogni elemento di allBlobs. Ritorna una mappa <identificativo, coppia (centroide, etichetta di classificazione predetta)		
+		*/
+		map< string, pair < CustomPoint , char > > createPredictionsMap(); 
+
+		/*
+			Confronta ogni elemento di testSet con il corrispondente elemento di predictions.
+		*/
+		void computePerformance(map< string, pair < CustomPoint , char > >& predictions);
+ 
+
+		
+
+		
 		
 
 
