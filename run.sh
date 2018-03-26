@@ -30,8 +30,9 @@ cp ../AG_utils/src/MapConverter.cpp src/MapConverter.cpp
 cp ../AG_utils/include/FileWriter.h include/FileWriter.h
 cp ../AG_utils/src/FileWriter.cpp src/FileWriter.cpp
 
-
+make clean
 make
 
-./bin/AG_extspot-v2-performance-evaluator ./testSet 95 0.1 100 100 4
-
+#./bin/AG_extspot-v2-performance-evaluator ./testSet 30 0.5 0.5 0.5 7.5
+./bin/AG_extspot-v2-performance-evaluator ./TestSetShortTerm 45 55 0.1 0.5 0.5 7.5
+#./bin/AG_extspot-v2-performance-evaluator ./MAPPE_CON_ERRORE 80 0.5 0.5 0.5 7.5

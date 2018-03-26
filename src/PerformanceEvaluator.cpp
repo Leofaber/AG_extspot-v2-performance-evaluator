@@ -2,178 +2,189 @@
 
 
 
-PerformanceEvaluator::PerformanceEvaluator(string _testSetPath, double _threshold, double _CDELT1, double _CDELT2, double _PSF){
+PerformanceEvaluator::PerformanceEvaluator(string _testSetPath, double _min_threshold, double _max_threshold, double _thresholdStep, double _CDELT1, double _CDELT2, double _PSF){
 
 	testSetPath = _testSetPath;
-	threshold = _threshold;
+	minThreshold = _min_threshold;
+	maxThreshold = _max_threshold;
+	thresholdStep = _thresholdStep;
 	CDELT1 = _CDELT1;
 	CDELT2 = _CDELT2;
 	PSF = _PSF;
-	
+
+	outfilename_log_file = "output_for_log_from"+to_string(minThreshold)+"_to_"+to_string(maxThreshold)+"_psf_"+to_string(PSF)+"cdelt1_"+to_string(CDELT1)+".txt";
+	outfilename_log_for_plot = "output_for_plot"+to_string(minThreshold)+"_to_"+to_string(maxThreshold)+"_psf_"+to_string(PSF)+"cdelt1_"+to_string(CDELT1)+".txt";
+
+	if(maxThreshold > 100)
+		maxThreshold = 100;
+	//if(remove(outfilename_log_for_plot.c_str()) == 0 ) {
+			//cout << "\n*Removing existing "<<outfilename_log_for_plot<<" file!" << endl;
+
+	string header2write = "";
+	header2write.append("Threshold Accuracy K_statistic FMeasure TPR FPR DistErrMean DistErrDev\n");
+	FileWriter::write2File(outfilename_log_for_plot, header2write);
+	//}
+
+	//if(remove(outfilename_log_file.c_str()) == 0 ) {
+			//cout << "*Removing existing "<<outfilename_log_file<<" file!" << endl;
+
+	header2write = "";
+	header2write.append("Threshold Total Instances\t Correctly Classified\t Incorrectly Classified\t K statistic\t FNR\t    FPR\t   Accuracy\t FMeasure\t EDM\n");
+	FileWriter::write2File(outfilename_log_file, header2write);
+	//}
+
 }
 
 void PerformanceEvaluator::evaluate(){
-	cout << "\n\nEvaluation...\n\n" << endl;
-	
+
 	// Riempio il vector<string> filenames con i nomi delle mappe contenute nel path
 	filenames = FolderManager::getFileNamesFromFolder(testSetPath);
-	
-	// Estrae i blob dalle immagini
-	/*vector< pair < string , Blob * > > allBlobs = */extractBlobsFromImages();
-	
+
+	cout << "*Analysis started: " <<filenames.size()<< " files need to be analyzed." << endl;
+
 	// Crea il test set
-	createTestSetMap(/*allBlobs*/);
-	
-	// PER OGNI SOGLIA
+	createTestSetMap();
+
+
+	map< string, pair < Blob* , char > > predictions;
+
+	// Per ogni soglia
+	double currentThreshold = minThreshold;
+
+	while( currentThreshold <= maxThreshold ){
 
 		// Crea le previsioni
-		map< string, pair < CustomPoint , char > > predictions = createPredictionsMap();
-		
+		predictions = createPredictionsMap(currentThreshold);
+
 		// Calcola le performance
-		computePerformance(predictions);
-	
-	   
-	cout << "\n\n" << endl;
-   
-	
+		computePerformance(predictions,currentThreshold);
+
+		currentThreshold = currentThreshold + thresholdStep;
+
+	}
+
 }
 
-/*vector< pair < string , Blob * > >*/void PerformanceEvaluator::extractBlobsFromImages() {
-	
+void PerformanceEvaluator::createTestSetMap() {
 
-	//vector< pair < string , Blob * > > allBlobs;
-	
+	cout << "*Creating test set.." << endl;
+	int total = filenames.size();
+	int count = 0;
+	int step = total/10;
+	if(step == 0)
+		step = 1;
+	int nextStep = step;
+
 	for(vector<string>::const_iterator it = filenames.begin(); it < filenames.end(); ++it ) {
-		
+
 		string imageName = *it;
 
 		string imagePathName = testSetPath;
-		int countBlob = 0;
-		
+
 		imagePathName.append("/" + imageName);
-		
-		
+
 		AgileMap agileMapTool(imagePathName.c_str());
-		
-		CustomMap map = MapConverter::mapPathToIntPtr(imagePathName.c_str());
-		
-				
-		///Trovo i blobs all'interno dell'imagine tramite Blobs finder
-		vector<Blob*> blobs = BlobsFinder::findBlobs(imagePathName, map.image,map.rows,map.cols,agileMapTool.GetXbin() ,agileMapTool.GetYbin() );
-		 
-		///Inserisco i blob all'interno di allBlobs
+
+
+		// Trovo i blobs all'interno dell'imagine tramite Blobs finder
+		vector<Blob*> blobs = BlobsFinder::findBlobs(imagePathName, PSF, agileMapTool.GetXbin() ,agileMapTool.GetYbin(), false);
+
+		int countBlob = 0;
+		bool fluxFound = false;
+
+		// Creo il test set map < string  ,  pair<  Blob* , char > >
+
 		for(vector<Blob *>::const_iterator it = blobs.begin(); it < blobs.end(); ++it ) {
-			
-			
-					
 
-			
-			// insert ele
-			string newName ="";
-			countBlob += 1;
-			
-			size_t foundPatternDotCts = imageName.find(".cts");
-			imageName = imageName.substr(0,foundPatternDotCts);
-			newName.append(imageName + "_BLOB" + to_string(countBlob));
-			
-			//cout << newName << endl;
-			allBlobs.push_back(make_pair(newName,*it));
-			//cout << "allBlobs element: " << it << endl;
-			newName.clear();
-		
+			Blob * b = *it;
+
+			string blobIdentifier = imagePathName;
+
+			blobIdentifier.append("_BLOB" + to_string(countBlob));
+
+
+			if( imageName.compare(0,1,"B") == 0 ){
+				testSet.insert(make_pair(blobIdentifier, make_pair(b,'B')));
+			}
+			else if(b->getNumberOfPhotonsInBlob() > 1 && b->isCentered() && !fluxFound ){
+				fluxFound = true;
+				testSet.insert(make_pair(blobIdentifier, make_pair(b, 'F')));
+			}
+
+			countBlob++;
 		}
-		
-		
-			
-	}
-	
-	cout << "Numero elementi inseriti in allBlobs: "<<allBlobs.size() << endl;	
-	//return allBlobs;
-}
 
 
-void PerformanceEvaluator::createTestSetMap(/*vector< pair < string , Blob * > >& allBlobs*/){
-	
-
-	for(vector< pair < string , Blob * > >::iterator i = allBlobs.begin(); i != allBlobs.end(); i++){
-		
-		pair < string , Blob * > blobInstance = *i;
-		
-		// unique blob identifier
-		string blobIdentifier = blobInstance.first;
-		
-		// blob pointer
-		Blob * blobPtr = blobInstance.second;
-		
-				
-		if( blobIdentifier.compare(0,1,"B") == 0 ){
-			CustomPoint centroidPX = blobPtr->getCentroid();
-			pair<CustomPoint, char> tmp = make_pair(centroidPX,'B');
-			testSet.insert(make_pair(blobIdentifier, make_pair(centroidPX, 'B')));
-		}
-		else if(blobPtr->getNumberOfPhotonsInBlob() > 1 && blobPtr->isCentered()){
-			CustomPoint centroidPX = blobPtr->getCentroid();
-			pair<CustomPoint, char> tmp = make_pair(centroidPX,'F');
-			testSet.insert(make_pair(blobIdentifier, make_pair(centroidPX, 'F')));
+	 	count++;
+		if( count > nextStep ){
+			cout << "[";
+			for(int i = 0; i < count/step; i++)
+				cout << "#";
+			for(int i = 0; i < total/step - count/step; i++)
+				cout <<"_";
+			cout << "]\n";
+			cout << flush;
+			nextStep += step;
 		}
 
 	}
+	cout << "*Creating test set completed! Number of elements: "<<testSet.size() << endl;
 
-	
-	cout << "Elementi inseriti in testSet\n" << endl;
-	
-	
-	/*for(map<string, pair < CustomPoint, char  > >::const_iterator it = testSet.begin(); it != testSet.end(); ++it)
-	{
-		std::cout << "testSet element: " << it->first << " (" << it->second.first.y << "," << it->second.first.x << "), " << it->second.second << "\n";
-	}*/
-	
-	
 }
 
-map< string, pair < CustomPoint , char > > PerformanceEvaluator::createPredictionsMap() {
-	
-	map< string, pair < CustomPoint , char > > predictions;
 
-	
-	for(vector< pair < string , Blob * > >::iterator i = allBlobs.begin(); i != allBlobs.end(); i++){
-		
-		pair < string , Blob * > blobInstance = *i;
-		
+
+map< string, pair < Blob * , char > > PerformanceEvaluator::createPredictionsMap(double currentThreshold) {
+
+	cout << "\n*Creating predictions. Threshold: " << currentThreshold << endl;
+	map< string, pair < Blob * , char > > predictions;
+
+	map< string, pair < Blob * , char > >::iterator i;
+	for(i = testSet.begin(); i != testSet.end(); i++){
+
 		// unique blob identifier
-		string blobIdentifier = blobInstance.first;
-		
+		string blobIdentifier = i->first;
+
 		// blob pointer
-		Blob * blobPtr = blobInstance.second;
-		
+		Blob * blobPtr = i->second.first;
+
 		CustomPoint centroid = blobPtr->getGalacticCentroid();
-		
+
 		vector<pair<string,double> > predicted = reverendBayes.classify(blobPtr);
-		
+
 		double fluxProbability = predicted[1].second;
-		
-		if(fluxProbability*100 >= threshold) 
-			
-			predictions.insert(make_pair(blobIdentifier, make_pair(centroid, 'F')));
-				
-		else 
-			predictions.insert(make_pair(blobIdentifier, make_pair(centroid, 'B')));
-			
-				
+
+		/*
+		cout << "\nblob: " << blobIdentifier << endl;
+		cout <<"["<< 100-blobPtr->getCentroid().y<<","<<blobPtr->getCentroid().x << "] flux prob. -> " <<fluxProbability*100<<endl;
+		cout << "Photon closenss: " << blobPtr->getPhotonsCloseness() << endl;
+		cout << "Photos: " << blobPtr->getNumberOfPhotonsInBlob() << endl;
+		*/
+
+		if(fluxProbability*100 >= currentThreshold)
+			predictions.insert(make_pair(blobIdentifier, make_pair(blobPtr, 'F')));
+		else
+			predictions.insert(make_pair(blobIdentifier, make_pair(blobPtr, 'B')));
+
 	}
-	
-	cout << "Elementi inseriti in classificatioSet" << endl;
+
+	cout << "*Creating predictions completed! "<< endl;
+	cout << "[";
+	float stepsize = 1/thresholdStep;
+	float steps = 101-maxThreshold;
+	float numberOfSteps = steps*stepsize;
+	for(int i = 0; i < currentThreshold; i++)
+		cout << "#";
+	for(int i = currentThreshold; i <= 100; i++)
+		cout << "_";
+	cout << "]"<<endl;
 
 	return predictions;
-	
-	/*for(map<string, pair < CustomPoint, char  > >::const_iterator it = predictions.begin(); it != predictions.end(); ++it)
-	{
-		std::cout << "testSet element: " << it->first << " (" << it->second.first.y << "," << it->second.first.x << "), " << it->second.second << "\n";
-	}*/
+
 
 }
 
-void PerformanceEvaluator::computePerformance(map< string, pair < CustomPoint , char > >& predictions) {
+void PerformanceEvaluator::computePerformance(map< string, pair < Blob* , char > >& predictions,double currentThreshold) {
 
 
 	int TP = 0;
@@ -186,20 +197,22 @@ void PerformanceEvaluator::computePerformance(map< string, pair < CustomPoint , 
 
 	double falsePositiveRate = 0;
 	double falseNegativeRate = 0;
+	double truePositiveRate = 0;
+	double trueNegativeRate = 0;
 
 	double sensitivity = 0;
 	double specificity = 0;
 	double accuracy = 0;
 	double f_measure = 0;
 	double precision = 0;
-	double k_choen = 0; 
-	
+	double k_choen = 0;
 
+	vector<double> errorDistances;
 	double errorDistancesTotal = 0;
 	double errorDistancesMean = 0;
 	double errorDistancesDeviation = 0;
 
-	//cout << "testSet size: " << testSet.size() << ", classficationSet size: " << predictions.size() << ", allBlobs size: "<< allBlobs.size() << endl;
+
 
 	if(testSet.size() != predictions.size()){
 		cout << "Different map size "<< endl;  // differing sizes, they are not the same
@@ -208,119 +221,177 @@ void PerformanceEvaluator::computePerformance(map< string, pair < CustomPoint , 
 		//cout << "Equal map size!" << endl;
 	}
 
-	map<string, pair < CustomPoint, char  > >::const_iterator i, j;
-			
+	map<string, pair < Blob *, char  > >::const_iterator i, j;
+
 	for(i = testSet.begin(), j = predictions.begin(); i != testSet.end(); ++i, ++j)
 	{
-		pair <string, pair < CustomPoint, char  > > testSetInstance = *i;
-		pair <string, pair < CustomPoint, char  > > predictionInstance = *j;
-		
-		
-		// unique blob identifiers
-		string testSetInstanceIdentifier = testSetInstance.first; //string blobIdentifierTestSet = testSetInstance.first;  
-		string predictionInstanceIdentifier = predictionInstance.first;
-		
-		// real centroid
-		CustomPoint realCentroid;
-		realCentroid.y = testSetInstance.second.first.y;
-		realCentroid.x = testSetInstance.second.first.x;
-		
-		//cout << realCentroid.y << " , " << realCentroid.x << endl;
-		
-		// predicted centroid
-		CustomPoint predictedCentroid;
-		predictedCentroid.y = predictionInstance.second.first.y;
-		predictedCentroid.x = predictionInstance.second.first.x;
-		
-		//cout << predictedCentroid.y << " , " << predictedCentroid.x << endl;
+		pair <string, 	pair <  Blob *, char  > > testSetInstance    = *i;
+		pair <string, 	pair <  Blob *, char  > > predictionInstance = *j;
 
-		string path = testSetInstanceIdentifier;
-		string newPath = "";
-		size_t foundPatternBLOB = path.find("_BLOB");
-		path = path.substr(0,foundPatternBLOB);
-		newPath.append(testSetPath + "/" + path + ".cts");
-		
-		
-		AgileMap agileMapTool(newPath.c_str());
-		double errorDistancesIstance = agileMapTool.SrcDist(realCentroid.y,realCentroid.x, predictedCentroid.y, predictedCentroid.x);
-		//cout << "Error distance: " << errorDistancesIstance << endl;
-		errorDistancesTotal += errorDistancesIstance;
 
-		
-				
-		// blob labels
-		char labelTestSet = testSetInstance.second.second;
-		char labelClassificationSet = predictionInstance.second.second;
-		
-		if(testSetInstanceIdentifier == predictionInstanceIdentifier && labelTestSet == 'F' && labelClassificationSet == 'F') {
-			
-			TP += 1;
-			//cout << testSetInstanceIdentifier << " = " << predictionInstanceIdentifier << " and " <<labelTestSet << " = " << labelClassificationSet << endl;
-			
-		} else if (testSetInstanceIdentifier == predictionInstanceIdentifier && labelTestSet == 'B' && labelClassificationSet == 'F') {
-			
-			FP += 1;
-			//cout << testSetInstanceIdentifier << " = " << predictionInstanceIdentifier << " and " <<labelTestSet << " = " << labelClassificationSet << endl;
-			
-		} else if (testSetInstanceIdentifier == predictionInstanceIdentifier && labelTestSet == 'B' && labelClassificationSet == 'B') {
-			
-			TN += 1;
-			//cout << testSetInstanceIdentifier << " = " << predictionInstanceIdentifier << " and " <<labelTestSet << " = " << labelClassificationSet << endl;
-			
-		}else if (testSetInstanceIdentifier == predictionInstanceIdentifier && labelTestSet == 'F' && labelClassificationSet == 'B') {
-			
-			FN += 1;
-			//cout << testSetInstanceIdentifier << " = " << predictionInstanceIdentifier << " and " <<labelTestSet << " = " << labelClassificationSet << endl;
-			
+		// Get unique blob identifiers
+		string testSetInstanceIdentifier    = i->first;
+		string predictionInstanceIdentifier = j->first;
+
+
+		// Get Blob Ptr
+		Blob * blob = i->second.first;
+
+
+		//Get blob labels
+		char realLabel      = i->second.second;
+		char predictedLabel = j->second.second;
+
+
+		//debug
+
+	//	cout << "\nBLOB: " << predictionInstanceIdentifier << endl;
+	//	cout <<"Blob: "<<100-blob->getCentroid().y << " , " << blob->getCentroid().x << endl;
+	//	cout <<"real label: " << realLabel << " predictedLabel: "<<predictedLabel<<endl;
+
+
+
+
+		if(testSetInstanceIdentifier != predictionInstanceIdentifier){
+			cout << testSetInstanceIdentifier << " != " <<  predictionInstanceIdentifier << endl;
+			exit(EXIT_FAILURE);
 		}
-		
+
+		if(realLabel == 'F' && predictedLabel == 'F') {
+
+			TP += 1;
+
+
+		} else if (realLabel == 'B' && predictedLabel == 'F') {
+
+			FP += 1;
+
+
+		} else if (realLabel == 'B' && predictedLabel == 'B') {
+
+			TN += 1;
+
+
+		}else if (realLabel == 'F' && predictedLabel == 'B') {
+
+			FN += 1;
+
+		}
+
+
+
+
+
+		/*
+			DISTANCE ERROR EVALUATION
+		*/
+		if(realLabel == 'F' && predictedLabel == 'F'){
+			// predicted centroid
+			CustomPoint predictedCentroid = blob->getCentroid();
+
+			string newPath = "";
+			size_t foundPatternBLOB = predictionInstanceIdentifier.find("_BLOB");
+			newPath = predictionInstanceIdentifier.substr(0,foundPatternBLOB);
+
+			AgileMap agileMapTool(newPath.c_str());
+
+			newPath.clear();
+
+
+			double errorDistanceIstance = agileMapTool.SrcDist(predictedCentroid.x, predictedCentroid.y, agileMapTool.GetMapCenterL(),agileMapTool.GetMapCenterB());
+			//cout << "Error distance: [ "<< to_string(predictedCentroid.y) <<" , "<< to_string(predictedCentroid.x) <<" ] "<< errorDistanceIstance << endl;
+			errorDistancesTotal += errorDistanceIstance;
+			errorDistances.push_back(errorDistanceIstance);
+
+
+		}
+
+
+
 	}
-	
-	cout << "Performance computed!\n" << endl;
-	
-	totalInstances = TP +TN + FN +FP;
-	
+
+	if(errorDistances.size() == 0) {
+
+		errorDistancesMean = 0;
+		errorDistancesDeviation = 0;
+
+	}else {
+
+		errorDistancesMean = errorDistancesTotal / errorDistances.size();
+
+
+
+		for(vector<double> :: iterator i=errorDistances.begin(); i != errorDistances.end(); i++) {
+				double term = pow(*i - errorDistancesMean, 2);
+				errorDistancesDeviation += term;
+			}
+		errorDistancesDeviation = sqrt(errorDistancesDeviation/errorDistances.size());
+
+	}
+
+
+	totalInstances = TP + TN + FN + FP;
+
 	totalFluxInstances = TP + FN;
 
 	totalBackgroundInstances = TN + FP;
 
-	errorDistancesMean = errorDistancesTotal / totalFluxInstances;
-	
-	sensitivity = TP/(double)(TP+FN);
-	
-	specificity = TN/(double)(TN+FP);
-	
-	accuracy = sensitivity * (TP/(double)totalInstances) + specificity * (TN/(double)totalInstances);
-	
-	precision = TP/(double)(TP+FP);
-	
-	f_measure = 2 * ((precision * sensitivity) / (precision + sensitivity));
-	
-	k_choen = ( ( (TP + TN) / (double)totalInstances ) - 0.5) / 0.5 ;
-	
-	falsePositiveRate = FP/(double)totalInstances;
-	
-	falseNegativeRate = FN/(double)totalInstances;
-	
+
+	if( TP == 0 && FP == 0) {
+
+		precision = 0;
+
+	}else {
+
+		sensitivity = TP/(double)(TP+FN);
+
+		specificity = TN/(double)(TN+FP);
+
+		accuracy = sensitivity * (TP/(double)totalInstances) + specificity * (TN/(double)totalInstances);
+
+		precision = TP/(double)(TP+FP);
+
+		f_measure = 2 * ((precision * sensitivity) / (precision + sensitivity));
+
+		double pr_e =  ( (TP+FP)/(double)totalInstances) * (  (TP+FN)/(double)totalInstances);
+
+		k_choen = ( ( (TP + TN) / (double)totalInstances ) -pr_e) / (1-pr_e);
+
+		falsePositiveRate = FP/(double)totalBackgroundInstances;
+
+		//falseNegativeRate = FN/(double)totalFluxInstances;
+
+		truePositiveRate = precision;
+	}
+
 	/// Output printing
-	cout << "\n\nOutuput printing \n\n" << endl;
-	cout << "Total istances: " << totalInstances << endl;
-	cout << "TP: " << TP << endl;
-	cout << "TN: " << TN << endl;
-	cout << "FP: " << FP << endl;
-	cout << "FN: " << FN << endl;
-	cout << "EDM: " << errorDistancesMean << endl;
-	cout << "FalsePostiveRate: " << setprecision(2) << falsePositiveRate << endl;
-	cout << "FalseNegativeRate: " << falseNegativeRate << endl;
-	cout << "Kappa statistic: " << k_choen << endl;
-	cout << "Accuracy: " << accuracy << endl;
-	cout << "FMeasure: " << f_measure << endl;
+	cout << "\n*Outuput printing" << endl;
+	cout << "*Total instances: " << totalInstances << endl;
+	cout << "*TP: " << TP << endl;
+	cout << "*TN: " << TN << endl;
+	cout << "*FP: " << FP << endl;
+	cout << "*FN: " << FN << endl;
+	cout << "*ErrorDistanceMean: " << errorDistancesMean <<" +- "<< errorDistancesDeviation << endl;
+	cout << "*FalsePostiveRate: " << falsePositiveRate <<endl;
+	cout << "*FalseNegativeRate: " << falseNegativeRate << endl;
+	cout << "*Kappa statistic: " << k_choen << endl;
+	cout << "*Accuracy: " << accuracy << endl;
+	cout << "*FMeasure: " << f_measure << endl;
+	cout << "\n" << endl;
 
-	/// Outuput file writing
-	
+
+
+	/*
+		DATA FOR LOG FILE
+	*/
 	string output2write = "";
-	output2write.append("Total Number of Instances: " + to_string(totalInstances) + ", Correctly Classified Instances: " + to_string( TP + TN )  + ", Incorrectly Classified Instances: " + to_string( FP + FN) + ", Kappa statistic: " + to_string(k_choen) +", False Negatives Rate:" + to_string(falseNegativeRate) + ", False Positives Rate: " + to_string(falsePositiveRate) + ", Accuracy: "+ to_string(accuracy) + ", FMeasure: " + to_string(f_measure) + ", Error Distances Mean: " + to_string(errorDistancesMean) );
-	FileWriter::write2File("log.txt", output2write);
+	output2write.append(to_string(currentThreshold)+" "+to_string(totalInstances)+" "+to_string( TP + TN )+" "+to_string( FP + FN )+" "+to_string(k_choen)+" "+to_string(falseNegativeRate)+" "+to_string(falsePositiveRate)+" "+to_string(accuracy)+" "+to_string(f_measure)+" "+to_string(errorDistancesMean)+"\n");
+	FileWriter::write2FileAppend(outfilename_log_file, output2write);
+
+	/*
+		DATA FOR CHART
+	*/
+	string outputChart2write = "";
+	outputChart2write.append(to_string(currentThreshold)+" "+to_string(accuracy) + " " +to_string(k_choen) + " " + to_string(f_measure)+ " " + to_string(truePositiveRate) + " " + to_string(falsePositiveRate) + " "+ to_string(errorDistancesMean) + " "+ to_string(errorDistancesDeviation) + "\n");
+	FileWriter::write2FileAppend(outfilename_log_for_plot, outputChart2write);
 }
-
-
