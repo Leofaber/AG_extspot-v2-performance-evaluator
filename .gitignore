@@ -67,4 +67,5 @@ src/BlobsFinder.cpp
 src/FolderManager.cpp
 src/MapConverter.cpp
 src/FileWriter.cpp
-
+include/BayesianClassifierForBlobs.h
+src/BayesianClassifierForBlobs.cpp
