@@ -4,8 +4,9 @@ Lo scopo di questo tool è valutare le performances del classificatore Bayesiano
 
 ## Input:
 * const char * path al test set
-* double classificationThreshold
-* double thresholdStep
+* double minThreshold
+* double maxThreshold
+* double step
 * double CDELT1
 * double CDELT2
 * double PSF
@@ -110,13 +111,3 @@ Si ricava il centroide del blob in coordinate galattiche chiamando il metodo `b-
      * Scrive su file:
         * `Total Number of Instances, Correctly Classified Instances, Incorrectly Classified Instances, Kappa statistic, False Negatives Rate, False Positives Rate, Accuracy, FMeasure, Error Distances Mean, Error Distances Deviation`
 
-## Appunti 
-* Inserimento di una entry in una mappa `map.insert(std::pair<key_type, value_type>(key, value));`
-* Iterare una mappa 
-    * ` map<string, int> symbolTable;`
-    * ` for (map<string, int>::iterator it = symbolTable.begin(); it != symbolTable.end(); it++ )`
-    * ` {    std::cout << it->first  // string (key)`
-    * `      << ':'`
-    * `      << it->second   // string's value `
-    * `      << std::endl ;`
-    * ` }`
